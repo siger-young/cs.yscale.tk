@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://cs.yscale.cf').hostname,
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: true,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="前言 Netgear WNDR4300 v1 应该是可玩性比较高的一款路由器，洋垃圾的话价格也比较亲民，事实上 WNDR4300 v1 又分为两个版本，一个为官方版，另一个为 SureWest 版。SureWest 版是 Netgear 与 ISP 方 SureWest 合作推出的，其部件与官方版完全一致。 但是有一点不同的是，它们在校验固件时有行为差异，这就导致了将常见的 v1 镜像烧入 Su">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netgear WNDR4300 v1 SureWest 版固件 patch">
+<meta property="og:url" content="https://cs.yscale.cf/2020/01/03/netgear-wndr4300-surewest-patch/index.html">
+<meta property="og:site_name" content="yscale&#39;s CS blog">
+<meta property="og:description" content="前言 Netgear WNDR4300 v1 应该是可玩性比较高的一款路由器，洋垃圾的话价格也比较亲民，事实上 WNDR4300 v1 又分为两个版本，一个为官方版，另一个为 SureWest 版。SureWest 版是 Netgear 与 ISP 方 SureWest 合作推出的，其部件与官方版完全一致。 但是有一点不同的是，它们在校验固件时有行为差异，这就导致了将常见的 v1 镜像烧入 Su">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-01-03T07:33:34.000Z">
+<meta property="article:modified_time" content="2020-03-27T07:49:16.824Z">
+<meta property="article:author" content="yscale">
+<meta property="article:tag" content="Netgear">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://cs.yscale.cf/2020/01/03/netgear-wndr4300-surewest-patch/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Netgear WNDR4300 v1 SureWest 版固件 patch | yscale's CS blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">yscale's CS blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">anything about CS</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="en">
+    <link itemprop="mainEntityOfPage" href="https://cs.yscale.cf/2020/01/03/netgear-wndr4300-surewest-patch/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars1.githubusercontent.com/u/13887988">
+      <meta itemprop="name" content="yscale">
+      <meta itemprop="description" content="yscale 的 CS 博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="yscale's CS blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Netgear WNDR4300 v1 SureWest 版固件 patch
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-01-03 15:33:34" itemprop="dateCreated datePublished" datetime="2020-01-03T15:33:34+08:00">2020-01-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-03-27 15:49:16" itemprop="dateModified" datetime="2020-03-27T15:49:16+08:00">2020-03-27</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Hardware/" itemprop="url" rel="index">
+                    <span itemprop="name">Hardware</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Hardware/Router/" itemprop="url" rel="index">
+                    <span itemprop="name">Router</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="前言"><a class="markdownIt-Anchor" href="#前言"></a> 前言</h1>
+<p>Netgear WNDR4300 v1 应该是可玩性比较高的一款路由器，洋垃圾的话价格也比较亲民，事实上 WNDR4300 v1 又分为两个版本，一个为官方版，另一个为 SureWest 版。SureWest 版是 Netgear 与 ISP 方 SureWest 合作推出的，其部件与官方版完全一致。<br />
+但是有一点不同的是，它们在校验固件时有行为差异，这就导致了将常见的 v1 镜像烧入 SureWest 版的 WNDR4300 v1 时会失败的现象。<br />
+以前家里有一个 WNDR4300 v1 不是 SW 版，用起来比较爽。宿舍里也买了一个结果是 v1 的 SW 版，烧写中遇到了总是失败的现象，而近日 KS 小姐姐似乎也中奖买到 SW 版，遂撰写此文以记录 patch 方法。</p>
+<h1 id="解决"><a class="markdownIt-Anchor" href="#解决"></a> 解决</h1>
+<p>在 <a href="https://github.com/jphein/wndr4300sw/blob/master/patch4300V1.0.0.6SW.c" target="_blank" rel="noopener">https://github.com/jphein/wndr4300sw/blob/master/patch4300V1.0.0.6SW.c</a> 处找到了一个 patch 程序，如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* Convert a binary image that was created for WNDR4300 to use on a WNDR4300sw.</span></span><br><span class="line"><span class="comment">* Usage: ./patch4300V1.0.0.6SW file.img</span></span><br><span class="line"><span class="comment">* Note: file.img is converted in place.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* 128-byte header for WNDR4300SW.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">char</span> sw[] = &#123;</span><br><span class="line"><span class="number">0x64</span>,<span class="number">0x65</span>,<span class="number">0x76</span>,<span class="number">0x69</span>,<span class="number">0x63</span>,<span class="number">0x65</span>,<span class="number">0x3A</span>,<span class="number">0x57</span>,<span class="number">0x4E</span>,<span class="number">0x44</span>,<span class="number">0x52</span>,<span class="number">0x34</span>,<span class="number">0x33</span>,<span class="number">0x30</span>,<span class="number">0x30</span>,<span class="number">0x53</span>,</span><br><span class="line"><span class="number">0x57</span>,<span class="number">0x0A</span>,<span class="number">0x76</span>,<span class="number">0x65</span>,<span class="number">0x72</span>,<span class="number">0x73</span>,<span class="number">0x69</span>,<span class="number">0x6F</span>,<span class="number">0x6E</span>,<span class="number">0x3A</span>,<span class="number">0x56</span>,<span class="number">0x31</span>,<span class="number">0x2E</span>,<span class="number">0x30</span>,<span class="number">0x2E</span>,<span class="number">0x30</span>,</span><br><span class="line"><span class="number">0x2E</span>,<span class="number">0x36</span>,<span class="number">0x53</span>,<span class="number">0x57</span>,<span class="number">0x0A</span>,<span class="number">0x72</span>,<span class="number">0x65</span>,<span class="number">0x67</span>,<span class="number">0x69</span>,<span class="number">0x6F</span>,<span class="number">0x6E</span>,<span class="number">0x3A</span>,<span class="number">0x0A</span>,<span class="number">0x68</span>,<span class="number">0x64</span>,<span class="number">0x5F</span>,</span><br><span class="line"><span class="number">0x69</span>,<span class="number">0x64</span>,<span class="number">0x3A</span>,<span class="number">0x32</span>,<span class="number">0x39</span>,<span class="number">0x37</span>,<span class="number">0x36</span>,<span class="number">0x33</span>,<span class="number">0x39</span>,<span class="number">0x34</span>,<span class="number">0x38</span>,<span class="number">0x2B</span>,<span class="number">0x30</span>,<span class="number">0x2B</span>,<span class="number">0x31</span>,<span class="number">0x32</span>,</span><br><span class="line"><span class="number">0x38</span>,<span class="number">0x2B</span>,<span class="number">0x31</span>,<span class="number">0x32</span>,<span class="number">0x38</span>,<span class="number">0x2B</span>,<span class="number">0x32</span>,<span class="number">0x78</span>,<span class="number">0x32</span>,<span class="number">0x2B</span>,<span class="number">0x33</span>,<span class="number">0x78</span>,<span class="number">0x33</span>,<span class="number">0x0A</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,</span><br><span class="line"><span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,</span><br><span class="line"><span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,</span><br><span class="line"><span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">main(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[]) &#123;</span><br><span class="line">    </span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">int</span> i; <span class="keyword">long</span> <span class="keyword">unsigned</span> <span class="keyword">int</span> j, n; FILE* f;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     \* Open the file.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (argc &lt; <span class="number">2</span>) <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((f = fopen(argv[<span class="number">1</span>], <span class="string">"r+"</span>)) == <span class="literal">NULL</span>) <span class="keyword">return</span> <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     \*  Replace the first 128 bytes with the header for WNDR3800SW.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>; i&lt;<span class="keyword">sizeof</span>(sw); i++) fputc(sw[i], f);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     \* Get the file size.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (fseek(f, <span class="number">0L</span>, SEEK_END) != <span class="number">0</span>) <span class="keyword">return</span> <span class="number">3</span>; n = ftell(f);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     \* Replace the last byte with one that results in a CRC of 0xFF.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (fseek(f, <span class="number">0L</span>, SEEK_SET) != <span class="number">0</span>) <span class="keyword">return</span> <span class="number">4</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>, j=<span class="number">1</span>; j&lt;n; j++) i = (i + (<span class="keyword">unsigned</span> <span class="keyword">int</span>)fgetc(f)) % <span class="number">0x100</span>;</span><br><span class="line"></span><br><span class="line">    fputc((<span class="keyword">char</span>)(<span class="number">0xFF</span> - i), f);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     \* Close the file.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (fclose(f) != <span class="number">0</span>) <span class="keyword">return</span> <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"The image file %s was converted successfully\n"</span>, argv[<span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译后对要烧写的镜像进行 patch 后即可在 SW 版上烧写。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Netgear/" rel="tag"># Netgear</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/02/reversing-kr-easy-keygen/" rel="prev" title="[reversing.kr] Easy Keygen 题解">
+      <i class="fa fa-chevron-left"></i> [reversing.kr] Easy Keygen 题解
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/16/thoughts-on-fixed-points-and-average-damp/" rel="next" title="浅谈不动点与平均阻尼法">
+      浅谈不动点与平均阻尼法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text"> 前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#解决"><span class="nav-number">2.</span> <span class="nav-text"> 解决</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="yscale"
+      src="https://avatars1.githubusercontent.com/u/13887988">
+  <p class="site-author-name" itemprop="name">yscale</p>
+  <div class="site-description" itemprop="description">yscale 的 CS 博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/siger-young" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;siger-young" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-yscale"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yscale</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '5029acc5b0d731935679',
+      clientSecret: '1527b60e3c2f74d647dc2ff464347745fc68bbb3',
+      repo: 'cs.yscale.cf',
+      owner: 'siger-young',
+      admin: ['siger-young'],
+      id: '6be9f84eb7e93cb440a3e4d4cdfb6dd5',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
