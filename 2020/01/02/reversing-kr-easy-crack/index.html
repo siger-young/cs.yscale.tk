@@ -47,12 +47,12 @@
   };
 </script>
 
-  <meta name="description" content="题目 给了一个可执行程序，打开后有文本框和按钮。  随便输入一段文字后，按下按钮提示密码错误。  基本可以确定，本题答案就是要输入的密码  分析 打开 IDA 进行静态分析，浏览了一圈过程，发现了处理入口，按 F5 给出 C 风格的伪代码。  查看判断条件其实就已经可大致判断出答案为 Ea5yR3versing，但是为了进一步的学习，此处进行一下深层次的理解。 先来看伪代码的变量声明区，有一些判">
+  <meta name="description" content="题目给了一个可执行程序，打开后有文本框和按钮。随便输入一段文字后，按下按钮提示密码错误。基本可以确定，本题答案就是要输入的密码 分析打开 IDA 进行静态分析，浏览了一圈过程，发现了处理入口，按 F5 给出 C 风格的伪代码。查看判断条件其实就已经可大致判断出答案为 Ea5yR3versing，但是为了进一步的学习，此处进行一下深层次的理解。先来看伪代码的变量声明区，有一些判断条件中出现的变量。此">
 <meta property="og:type" content="article">
 <meta property="og:title" content="[reversing.kr] Easy Crack 题解">
 <meta property="og:url" content="https://cs.yscale.cf/2020/01/02/reversing-kr-easy-crack/index.html">
 <meta property="og:site_name" content="yscale&#39;s CS blog">
-<meta property="og:description" content="题目 给了一个可执行程序，打开后有文本框和按钮。  随便输入一段文字后，按下按钮提示密码错误。  基本可以确定，本题答案就是要输入的密码  分析 打开 IDA 进行静态分析，浏览了一圈过程，发现了处理入口，按 F5 给出 C 风格的伪代码。  查看判断条件其实就已经可大致判断出答案为 Ea5yR3versing，但是为了进一步的学习，此处进行一下深层次的理解。 先来看伪代码的变量声明区，有一些判">
+<meta property="og:description" content="题目给了一个可执行程序，打开后有文本框和按钮。随便输入一段文字后，按下按钮提示密码错误。基本可以确定，本题答案就是要输入的密码 分析打开 IDA 进行静态分析，浏览了一圈过程，发现了处理入口，按 F5 给出 C 风格的伪代码。查看判断条件其实就已经可大致判断出答案为 Ea5yR3versing，但是为了进一步的学习，此处进行一下深层次的理解。先来看伪代码的变量声明区，有一些判断条件中出现的变量。此">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://cs.yscale.cf/2020/01/02/reversing-kr-easy-crack/easy-crack-1.png">
 <meta property="og:image" content="https://cs.yscale.cf/2020/01/02/reversing-kr-easy-crack/easy-crack-2.png">
@@ -253,93 +253,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="题目"><a class="markdownIt-Anchor" href="#题目"></a> 题目</h1>
-<p>给了一个可执行程序，打开后有文本框和按钮。</p>
-<img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-1.png" class="" title="程序界面">
-<p>随便输入一段文字后，按下按钮提示密码错误。</p>
-<img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-2.png" class="" title="密码错误的提示">
-<p>基本可以确定，本题答案就是要输入的密码</p>
-<h1 id="分析"><a class="markdownIt-Anchor" href="#分析"></a> 分析</h1>
-<p>打开 IDA 进行静态分析，浏览了一圈过程，发现了处理入口，按 F5 给出 C 风格的伪代码。</p>
-<img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-3.png" class="" title="处理入口">
-<p>查看判断条件其实就已经可大致判断出答案为 <code>Ea5yR3versing</code>，但是为了进一步的学习，此处进行一下深层次的理解。<br />
-先来看伪代码的变量声明区，有一些判断条件中出现的变量。</p>
-<img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-4.png" class="" title="处理入口声明区">
-<p>此处的 <code>String</code> 实际上是字符串的第一个字符，而 <code>[sp+4h]</code> 表明了其相对于栈顶的偏移为 <code>0x04</code>，类似地，对于其它变量也可利用 IDA 给出的地址偏移进行分析。<br />
-设字符串为 <code>str</code>，可列出下表。</p>
-<table>
-<thead>
-<tr>
-<th>变量名</th>
-<th>实际值</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>String</code></td>
-<td><code>str[0]</code></td>
-</tr>
-<tr>
-<td><code>v3</code></td>
-<td><code>str[1]</code></td>
-</tr>
-<tr>
-<td><code>v4</code></td>
-<td><code>str[2]</code></td>
-</tr>
-<tr>
-<td><code>v5</code></td>
-<td><code>str[4]</code></td>
-</tr>
-</tbody>
-</table>
-<p>接着，程序对 <code>str</code> 进行清空操作，使用 <code>GetDlgItemTextA</code> 获取文本框中的内容，并将其存入 <code>str</code>。<br />
-最后结合判断条件</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">v3 == <span class="string">'a'</span> &amp;&amp; !<span class="built_in">strncmp</span>(&amp;v4, <span class="string">"5y"</span>, <span class="number">2u</span>) &amp;&amp; !<span class="built_in">strcmp</span>(&amp;v5, <span class="string">"R3versing"</span>) &amp;&amp; <span class="keyword">String</span> == <span class="string">'E'</span></span><br></pre></td></tr></table></figure>
-<p>可以知道 <code>str</code> 应为如下内容。</p>
-<table>
-<thead>
-<tr>
-<th>0</th>
-<th>1</th>
-<th>2</th>
-<th>3</th>
-<th>4</th>
-<th>5</th>
-<th>6</th>
-<th>7</th>
-<th>8</th>
-<th>9</th>
-<th>A</th>
-<th>B</th>
-<th>C</th>
-<th>D</th>
-<th>E</th>
-<th>F</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>E</td>
-<td>a</td>
-<td>5</td>
-<td>y</td>
-<td>R</td>
-<td>3</td>
-<td>v</td>
-<td>e</td>
-<td>r</td>
-<td>s</td>
-<td>i</td>
-<td>n</td>
-<td>g</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>便得到答案 <code>Ea5yR3versing</code>。</p>
+        <h1 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h1><p>给了一个可执行程序，打开后有文本框和按钮。<br><img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-1.png" class="" title="程序界面"><br>随便输入一段文字后，按下按钮提示密码错误。<br><img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-2.png" class="" title="密码错误的提示"><br>基本可以确定，本题答案就是要输入的密码</p>
+<h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><p>打开 IDA 进行静态分析，浏览了一圈过程，发现了处理入口，按 F5 给出 C 风格的伪代码。<br><img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-3.png" class="" title="处理入口"><br>查看判断条件其实就已经可大致判断出答案为 <code>Ea5yR3versing</code>，但是为了进一步的学习，此处进行一下深层次的理解。<br>先来看伪代码的变量声明区，有一些判断条件中出现的变量。<br><img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-4.png" class="" title="处理入口声明区"><br>此处的 <code>String</code> 实际上是字符串的第一个字符，而 <code>[sp+4h]</code> 表明了其相对于栈顶的偏移为 <code>0x04</code>，类似地，对于其它变量也可利用 IDA 给出的地址偏移进行分析。<br>设字符串为 <code>str</code>，可列出下表。<br>|  变量名  |  实际值  |<br>| —— | —— |<br>|  <code>String</code>  |  <code>str[0]</code>  |<br>|  <code>v3</code>  | <code>str[1]</code> |<br>|  <code>v4</code>  | <code>str[2]</code> |<br>|  <code>v5</code>  | <code>str[4]</code> |<br>接着，程序对 <code>str</code> 进行清空操作，使用 <code>GetDlgItemTextA</code> 获取文本框中的内容，并将其存入 <code>str</code>。<br>最后结合判断条件<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">v3 == <span class="string">'a'</span> &amp;&amp; !<span class="built_in">strncmp</span>(&amp;v4, <span class="string">"5y"</span>, <span class="number">2u</span>) &amp;&amp; !<span class="built_in">strcmp</span>(&amp;v5, <span class="string">"R3versing"</span>) &amp;&amp; <span class="keyword">String</span> == <span class="string">'E'</span></span><br></pre></td></tr></table></figure><br>可以知道 <code>str</code> 应为如下内容。<br>|0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F|<br>|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|<br>|E|a|5|y|R|3|v|e|r|s|i|n|g| | | |<br>便得到答案 <code>Ea5yR3versing</code>。</p>
 
     </div>
 
@@ -425,7 +340,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#题目"><span class="nav-number">1.</span> <span class="nav-text"> 题目</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分析"><span class="nav-number">2.</span> <span class="nav-text"> 分析</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#题目"><span class="nav-number">1.</span> <span class="nav-text">题目</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分析"><span class="nav-number">2.</span> <span class="nav-text">分析</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -441,7 +356,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -454,7 +369,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

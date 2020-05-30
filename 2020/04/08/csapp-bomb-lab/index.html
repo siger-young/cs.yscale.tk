@@ -47,12 +47,12 @@
   };
 </script>
 
-  <meta name="description" content="[CS:APP] Bomb Lab 解题报告 Bomb Lab 让我回想到 CTF 招新赛时的恐惧.">
+  <meta name="description" content="[CS:APP] Bomb Lab 解题报告Bomb Lab 让我回想到 CTF 招新赛时的恐惧.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="[CS:APP] Bomb Lab 解题报告">
 <meta property="og:url" content="https://cs.yscale.cf/2020/04/08/csapp-bomb-lab/index.html">
 <meta property="og:site_name" content="yscale&#39;s CS blog">
-<meta property="og:description" content="[CS:APP] Bomb Lab 解题报告 Bomb Lab 让我回想到 CTF 招新赛时的恐惧.">
+<meta property="og:description" content="[CS:APP] Bomb Lab 解题报告Bomb Lab 让我回想到 CTF 招新赛时的恐惧.">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://cs.yscale.cf/2020/04/08/csapp-bomb-lab/phase-1-1.png">
 <meta property="og:image" content="https://cs.yscale.cf/2020/04/08/csapp-bomb-lab/phase-2-1.png">
@@ -256,100 +256,34 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="csapp-bomb-lab-解题报告"><a class="markdownIt-Anchor" href="#csapp-bomb-lab-解题报告"></a> [CS:APP] Bomb Lab 解题报告</h1>
-<p>Bomb Lab 让我回想到 CTF 招新赛时的恐惧.</p>
-<a id="more"></a>
-<h2 id="任务描述"><a class="markdownIt-Anchor" href="#任务描述"></a> 任务描述</h2>
-<p>就是逆向题</p>
-<h2 id="分析与解答"><a class="markdownIt-Anchor" href="#分析与解答"></a> 分析与解答</h2>
-<ol>
-<li>字符串相等</li>
-</ol>
-<img src="/2020/04/08/csapp-bomb-lab/phase-1-1.png" class="" title="Phase 1 pseudocode">
-<p>直接是裸地判断字符串是否相等, 因此答案为 <code>Border relations with Canada have never been better.</code><br />
-2. 等比数列</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-2-1.png" class="" title="Phase 2 pseudocode">
-<p>读取了 6 个数字, 注意到声明区 <code>v4</code> 是第 2 个数字的地址, 分析下面循环体</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">result = (<span class="keyword">unsigned</span> <span class="keyword">int</span>)(<span class="number">2</span> * *((_DWORD *)v2 - <span class="number">1</span>));</span><br><span class="line"><span class="keyword">if</span> ( *(_DWORD *)v2 != (_DWORD)result )</span><br><span class="line">    explode_bomb(a1, &amp;v3);</span><br><span class="line">v2 += <span class="number">4</span>;</span><br></pre></td></tr></table></figure>
-<p>结合初始条件 <code>v2 = &amp;v4</code> 可以知道循环从第 2 个数字开始遍历, <code>result</code> 中存储的是前一个数字的 2 倍, 必须要让当前数等于 <code>result</code>, 即构成首项为 1, 公比为 2 的等比数列 <code>1 2 4 8 16 32</code>.<br />
-3. 简单 switch</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-3-1.png" class="" title="Phase 3 pseudocode">
-<p>读取两个数, 在 <code>switch</code> 里面随便抽一组就可以了, 我抽的是 <code>0 207</code>.<br />
-4. 简单函数逆向</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-4-1.png" class="" title="Phase 4 pseudocode">
-<p>读取了两个数字 <code>v8</code> 和 <code>v9</code>, 为了通过, 必须要让 <code>result</code> 和 <code>v9</code> 都取 0, 其中 <code>v9</code> 是可控的, 而 <code>result</code> 则是 <code>fun4(v8, 0, 14)</code> 的结果, 来看一下这个 <code>fun4</code>.</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-4-2.png" class="" title="Phase 4 关键函数">
-<p>死分析的话其实用处不大, 中间突如其来的一行 <code>result = 0LL;</code> 引起了关注, 而注意到两个 <code>if</code> 语句的条件恰好是一个大于一个小于, 那么只要 <code>v3 == a1</code>, 那么 <code>result</code> 就会以 0 返回, 其中 <code>v3</code> 是 <code>(a3 - a2) / 2 + a2</code>, 根据先前的调用参数 <code>fun4(v8, 0, 14)</code> 可以知道 <code>v8</code> 为 7.<br />
-综上输入为 <code>7 0</code><br />
-5. 简单密码逆向</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-5-1.png" class="" title="Phase 5 pseudocode">
-<p>输入一行 6 个字符的文本, 其对文本进行变换, 变换后的结果要和 <code>flyers</code> 一致.<br />
-先去看一下这个 <code>array_3449</code> 的内容</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-5-2.png" class="" title="Phase 5 数组内容">
-<p>结合先前的分析, 容易写出如下代码枚举答案</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* charset = <span class="string">" aduiersnfotvbyl"</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* target = <span class="string">"flyers"</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="built_in">strlen</span>(target); i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">40</span>; j &lt; <span class="number">128</span>; j++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">int</span> offset = (j) &amp; <span class="number">0xF</span>;</span><br><span class="line">            <span class="keyword">if</span>(<span class="number">0</span> &lt;= offset &amp;&amp; offset &lt; <span class="built_in">strlen</span>(charset) &amp;&amp; charset[offset] == target[i])</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">"%c"</span>, j);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其实程序里变换用到的 <code>&amp;</code> 就使得答案不唯一了, 我的代码跑出来的是 <code>)/.567</code>.<br />
-6. 最终逆向<br />
-幸好是 IDA 开的, 我不知道如果用 gdb 反汇编的话我会不会吐……</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-6-1.png" class="" title="Phase 6 初始">
-<p>读取了 6 个数, 具体要干什么需要继续看.</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-6-2.png" class="" title="Phase 6 子步骤 1">
-<p>（这边的注释都是人工添加的, IDA 还提供自定义变量名的功能, 非常有利于读逆向代码）<br />
-读入完成后马上就开始验证输入, 根据 <code>if ( (unsigned int)(*v1 - 1) &gt; 5 )</code> 可以知道输入的六个数必须满足 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>a</mi><mi>i</mi></msub><mo>≤</mo><mn>6</mn></mrow><annotation encoding="application/x-tex">a_i\leq 6</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7859700000000001em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">6</span></span></span></span>.<br />
-这个循环体内的子循环体保证 6 个数不重复.</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ( *v1 == six_nums[v3] )</span><br><span class="line">    explode_bomb(a1, six_nums);</span><br><span class="line">++v3;</span><br></pre></td></tr></table></figure>
+        <h1 id="CS-APP-Bomb-Lab-解题报告"><a href="#CS-APP-Bomb-Lab-解题报告" class="headerlink" title="[CS:APP] Bomb Lab 解题报告"></a>[CS:APP] Bomb Lab 解题报告</h1><p>Bomb Lab 让我回想到 CTF 招新赛时的恐惧.<br><a id="more"></a></p>
+<h2 id="任务描述"><a href="#任务描述" class="headerlink" title="任务描述"></a>任务描述</h2><p>就是逆向题</p>
+<h2 id="分析与解答"><a href="#分析与解答" class="headerlink" title="分析与解答"></a>分析与解答</h2><ol>
+<li>字符串相等<img src="/2020/04/08/csapp-bomb-lab/phase-1-1.png" class="" title="Phase 1 pseudocode">
+直接是裸地判断字符串是否相等, 因此答案为 <code>Border relations with Canada have never been better.</code></li>
+<li>等比数列<img src="/2020/04/08/csapp-bomb-lab/phase-2-1.png" class="" title="Phase 2 pseudocode">
+读取了 6 个数字, 注意到声明区 <code>v4</code> 是第 2 个数字的地址, 分析下面循环体<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">result = (<span class="keyword">unsigned</span> <span class="keyword">int</span>)(<span class="number">2</span> * *((_DWORD *)v2 - <span class="number">1</span>));</span><br><span class="line"><span class="keyword">if</span> ( *(_DWORD *)v2 != (_DWORD)result )</span><br><span class="line">    explode_bomb(a1, &amp;v3);</span><br><span class="line">v2 += <span class="number">4</span>;</span><br></pre></td></tr></table></figure>
+结合初始条件 <code>v2 = &amp;v4</code> 可以知道循环从第 2 个数字开始遍历, <code>result</code> 中存储的是前一个数字的 2 倍, 必须要让当前数等于 <code>result</code>, 即构成首项为 1, 公比为 2 的等比数列 <code>1 2 4 8 16 32</code>.</li>
+<li>简单 switch<img src="/2020/04/08/csapp-bomb-lab/phase-3-1.png" class="" title="Phase 3 pseudocode">
+读取两个数, 在 <code>switch</code> 里面随便抽一组就可以了, 我抽的是 <code>0 207</code>.</li>
+<li>简单函数逆向<img src="/2020/04/08/csapp-bomb-lab/phase-4-1.png" class="" title="Phase 4 pseudocode">
+读取了两个数字 <code>v8</code> 和 <code>v9</code>, 为了通过, 必须要让 <code>result</code> 和 <code>v9</code> 都取 0, 其中 <code>v9</code> 是可控的, 而 <code>result</code> 则是 <code>fun4(v8, 0, 14)</code> 的结果, 来看一下这个 <code>fun4</code>.<img src="/2020/04/08/csapp-bomb-lab/phase-4-2.png" class="" title="Phase 4 关键函数">
+死分析的话其实用处不大, 中间突如其来的一行 <code>result = 0LL;</code> 引起了关注, 而注意到两个 <code>if</code> 语句的条件恰好是一个大于一个小于, 那么只要 <code>v3 == a1</code>, 那么 <code>result</code> 就会以 0 返回, 其中 <code>v3</code> 是 <code>(a3 - a2) / 2 + a2</code>, 根据先前的调用参数 <code>fun4(v8, 0, 14)</code> 可以知道 <code>v8</code> 为 7.<br>综上输入为 <code>7 0</code></li>
+<li>简单密码逆向<img src="/2020/04/08/csapp-bomb-lab/phase-5-1.png" class="" title="Phase 5 pseudocode">
+输入一行 6 个字符的文本, 其对文本进行变换, 变换后的结果要和 <code>flyers</code> 一致.<br>先去看一下这个 <code>array_3449</code> 的内容<img src="/2020/04/08/csapp-bomb-lab/phase-5-2.png" class="" title="Phase 5 数组内容">
+结合先前的分析, 容易写出如下代码枚举答案<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* charset = <span class="string">" aduiersnfotvbyl"</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* target = <span class="string">"flyers"</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="built_in">strlen</span>(target); i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">40</span>; j &lt; <span class="number">128</span>; j++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">int</span> offset = (j) &amp; <span class="number">0xF</span>;</span><br><span class="line">            <span class="keyword">if</span>(<span class="number">0</span> &lt;= offset &amp;&amp; offset &lt; <span class="built_in">strlen</span>(charset) &amp;&amp; charset[offset] == target[i])</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">"%c"</span>, j);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+其实程序里变换用到的 <code>&amp;</code> 就使得答案不唯一了, 我的代码跑出来的是 <code>)/.567</code>.</li>
+<li>最终逆向<br>幸好是 IDA 开的, 我不知道如果用 gdb 反汇编的话我会不会吐……<img src="/2020/04/08/csapp-bomb-lab/phase-6-1.png" class="" title="Phase 6 初始">
+读取了 6 个数, 具体要干什么需要继续看.<img src="/2020/04/08/csapp-bomb-lab/phase-6-2.png" class="" title="Phase 6 子步骤 1">
+（这边的注释都是人工添加的, IDA 还提供自定义变量名的功能, 非常有利于读逆向代码）<br>读入完成后马上就开始验证输入, 根据 <code>if ( (unsigned int)(*v1 - 1) &gt; 5 )</code> 可以知道输入的六个数必须满足 $a_i\leq 6$.<br>这个循环体内的子循环体保证 6 个数不重复.<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ( *v1 == six_nums[v3] )</span><br><span class="line">    explode_bomb(a1, six_nums);</span><br><span class="line">++v3;</span><br></pre></td></tr></table></figure>
 <img src="/2020/04/08/csapp-bomb-lab/phase-6-3.png" class="" title="Phase 6 子步骤 2">
-<p>这边将 7 分别和输入的六个数作差.</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-6-4.png" class="" title="Phase 6 子步骤 3">
-<p>这里开始有点麻烦了, 奇怪的东西多了起来, 首先是这边这个 <code>node1</code> 的数据.</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-6-4-1.png" class="" title="Phase 6 node1">
-<p>注意到 <code>list_node = (_QWORD *)list_node[1];</code> 是具有遍历特征的, 对 <code>node1</code> 的数据更改显示方式, 就发现了一个链表. 这边做的主要操作就是, 将之前处理过的六个数字对应的链表结点 (1 对应 <code>node1</code>, 2 对应 <code>node2</code>, …) 存在一个数组里.</p>
-<img src="/2020/04/08/csapp-bomb-lab/phase-6-5.png" class="" title="Phase 6 最终步">
-<p>这里首先是对链表按照之前数组的顺序进行重新排序, 最后需要保证的是结点的值不能小于其后继节点, 即链表呈单调递减. 需要注意的是, 这边比较时进行了类型转换. 根据先前 <code>node1</code> 的图, 可列出下表.</p>
-<table>
-<thead>
-<tr>
-<th>名称</th>
-<th>值</th>
-<th>(int)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>node1</code></td>
-<td>0x10000014C</td>
-<td>0x14C</td>
-</tr>
-<tr>
-<td><code>node2</code></td>
-<td>0x2000000A8</td>
-<td>0x0A8</td>
-</tr>
-<tr>
-<td><code>node3</code></td>
-<td>0x30000039C</td>
-<td>0x39C</td>
-</tr>
-<tr>
-<td><code>node4</code></td>
-<td>0x4000002B3</td>
-<td>0x2B3</td>
-</tr>
-<tr>
-<td><code>node5</code></td>
-<td>0x5000001DD</td>
-<td>0x1DD</td>
-</tr>
-<tr>
-<td><code>node6</code></td>
-<td>0x6000001BB</td>
-<td>0x1BB</td>
-</tr>
-</tbody>
-</table>
-<p>比较最后一列, 使得大小降序排列, 可知顺序为 <code>3 4 5 6 1 2</code>, 同时注意到预处理时进行了 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>7</mn><mo>−</mo><msub><mi>a</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">7-a_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">7</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 的操作, 所以最终的输入为 <code>4 3 2 1 6 5</code>.</p>
-<h2 id="完整解答"><a class="markdownIt-Anchor" href="#完整解答"></a> 完整解答</h2>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Border relations with Canada have never been better.</span><br><span class="line">1 2 4 8 16 32</span><br><span class="line">0 207</span><br><span class="line">7 0</span><br><span class="line">)&#x2F;.567</span><br><span class="line">4 3 2 1 6 5</span><br></pre></td></tr></table></figure>
+这边将 7 分别和输入的六个数作差.<img src="/2020/04/08/csapp-bomb-lab/phase-6-4.png" class="" title="Phase 6 子步骤 3">
+这里开始有点麻烦了, 奇怪的东西多了起来, 首先是这边这个 <code>node1</code> 的数据.<img src="/2020/04/08/csapp-bomb-lab/phase-6-4-1.png" class="" title="Phase 6 node1">
+注意到 <code>list_node = (_QWORD *)list_node[1];</code> 是具有遍历特征的, 对 <code>node1</code> 的数据更改显示方式, 就发现了一个链表. 这边做的主要操作就是, 将之前处理过的六个数字对应的链表结点 (1 对应 <code>node1</code>, 2 对应 <code>node2</code>, …) 存在一个数组里.<img src="/2020/04/08/csapp-bomb-lab/phase-6-5.png" class="" title="Phase 6 最终步">
+这里首先是对链表按照之前数组的顺序进行重新排序, 最后需要保证的是结点的值不能小于其后继节点, 即链表呈单调递减. 需要注意的是, 这边比较时进行了类型转换. 根据先前 <code>node1</code> 的图, 可列出下表.<br>|名称|值|(int)|<br>|—-|—|——-|<br>|<code>node1</code>|0x10000014C|0x14C|<br>|<code>node2</code>|0x2000000A8|0x0A8|<br>|<code>node3</code>|0x30000039C|0x39C|<br>|<code>node4</code>|0x4000002B3|0x2B3|<br>|<code>node5</code>|0x5000001DD|0x1DD|<br>|<code>node6</code>|0x6000001BB|0x1BB|</li>
+</ol>
+<p>比较最后一列, 使得大小降序排列, 可知顺序为 <code>3 4 5 6 1 2</code>, 同时注意到预处理时进行了 $7-a_i$ 的操作, 所以最终的输入为 <code>4 3 2 1 6 5</code>.</p>
+<h2 id="完整解答"><a href="#完整解答" class="headerlink" title="完整解答"></a>完整解答</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Border relations with Canada have never been better.</span><br><span class="line">1 2 4 8 16 32</span><br><span class="line">0 207</span><br><span class="line">7 0</span><br><span class="line">)&#x2F;.567</span><br><span class="line">4 3 2 1 6 5</span><br></pre></td></tr></table></figure>
     </div>
 
     
@@ -434,7 +368,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#csapp-bomb-lab-解题报告"><span class="nav-number">1.</span> <span class="nav-text"> [CS:APP] Bomb Lab 解题报告</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#任务描述"><span class="nav-number">1.1.</span> <span class="nav-text"> 任务描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分析与解答"><span class="nav-number">1.2.</span> <span class="nav-text"> 分析与解答</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#完整解答"><span class="nav-number">1.3.</span> <span class="nav-text"> 完整解答</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#CS-APP-Bomb-Lab-解题报告"><span class="nav-number">1.</span> <span class="nav-text">[CS:APP] Bomb Lab 解题报告</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#任务描述"><span class="nav-number">1.1.</span> <span class="nav-text">任务描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分析与解答"><span class="nav-number">1.2.</span> <span class="nav-text">分析与解答</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#完整解答"><span class="nav-number">1.3.</span> <span class="nav-text">完整解答</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -450,7 +384,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -463,7 +397,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -559,8 +493,39 @@
 
   
       
-<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+<script type="text/javascript">
+  window.MathJax = ({
+    tex: {
+      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
+      processEscapes: true,
+      tags: 'ams'
+    },
+    options: {
+			renderActions: {
+				checkLoading: [],
+				findScript: [10, function (doc) {
+					for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+					const display = !!node.type.match(/; *mode=display/);
+					const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+					const text = document.createTextNode('');
+					node.parentNode.replaceChild(text, node);
+					math.start = {node: text, delim: '', n: 0};
+					math.end = {node: text, delim: '', n: 0};
+					doc.math.push(math);
+					}
+				}, '']
+			},
+			ignoreHtmlClass: 'tex2jax_ignore',
+			processHtmlClass: 'tex2jax_process',
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+  });
+</script>
+<script>
+  NexT.utils.getScript('https://cdn.bootcdn.net/ajax/libs/mathjax/3.0.5/es5/tex-mml-chtml.js');
+</script>
 
+    
 
   
 
