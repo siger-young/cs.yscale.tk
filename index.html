@@ -942,7 +942,7 @@ a_n-x_0=f'(x_0)(a_{n-1}-x_0),</script><p>显然，这里的 $f’(x_0)$ 的绝�
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-03-27 15:49:16" itemprop="dateModified" datetime="2020-03-27T15:49:16+08:00">2020-03-27</time>
+                <time title="Modified: 2020-05-30 22:03:50" itemprop="dateModified" datetime="2020-05-30T22:03:50+08:00">2020-05-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -974,11 +974,14 @@ a_n-x_0=f'(x_0)(a_{n-1}-x_0),</script><p>显然，这里的 $f’(x_0)$ 的绝�
 
       
           <h1 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h1><p>给了一个可执行程序，在命令行下工作，输入用户名和序列号，检查是否相匹配。<br><img src="/2020/01/02/reversing-kr-easy-keygen/easy-keygen-1.png" class="" title="程序界面"><br>题目要求查找序列号为 <code>5B134977135E7D13</code> 的用户名，即为答案。</p>
-<h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><p>打开 IDA 进行静态分析，找到 <code>_main</code> 入口。<br><img src="/2020/01/02/reversing-kr-easy-keygen/easy-keygen-2.png" class="" title="程序入口"><br>可以看到在两次 <code>scanf</code> 中夹杂了一段循环，似乎是对输入的内容进行处理，存放到以 <code>v15</code> 为首字符的字符串中，在两次 <code>scanf</code> 结束后，出现了 <code>strcmp</code> 比较，其判断的是序列号字符串与 <code>v15</code> 为首的字符串是否匹配，这决定了答案的正确与否。<br>我们关心的实际上是对用户名处理的片段，除了 <code>v15</code> 以外，这一片段还涉及到了这些变量。<br>|变量名|可能的含义|<br>|———|—-|<br>|<code>v11</code>|用户输入字符串的首字符|<br>|<code>v3</code>|循环变量|<br>|<code>v8</code>|待分析|<br>|<code>i</code>|实际上是 <code>v3 % 3</code>|<br>另外 <code>v8</code> 与 <code>i</code> 有关系，处理中使用到了 <code>*(&amp;v8 + i)</code> 的值，这值得进一步的观察。<br>值得注意的是，此处处理使用了异或运算 <code>^</code>，这一运算在很多 CTF 题中常常出现，得益于其性质</p>
-<script type="math/tex; mode=display">\oplus^{-1}=\oplus</script><p>即有</p>
-<script type="math/tex; mode=display">A \oplus B \oplus B = A</script><p>成立。</p>
-<p>回到声明区，看一下 <code>v8</code> 相关的声明。<br><img src="/2020/01/02/reversing-kr-easy-keygen/easy-keygen-3.png" class="" title="声明区"><br>可以看到有连续的三个变量声明，结合之前处理片段前的赋值，可以知道<br>|表达式|值|<br>|——-|—|<br>|<code>v8</code> 即 <code>*(&amp;v8 + 0)</code>|16|<br>|<code>v9</code> 即 <code>*(&amp;v8 + 1)</code>|32|<br>|<code>v10</code> 即 <code>*(&amp;v8 + 2)</code>|48|<br>实际上可将其抽象为 <code>*(&amp;v8 + i) == (i + 1) * 16</code>，根据上述内容可以重写处理过程。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">char</span> name[<span class="number">100</span>];</span><br><span class="line">	<span class="keyword">char</span> sn[<span class="number">100</span>];</span><br><span class="line">	<span class="built_in">memset</span>(sn, <span class="number">0</span>, <span class="keyword">sizeof</span>(sn));</span><br><span class="line">	<span class="built_in">scanf</span>(<span class="string">"%s"</span>, name);</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="built_in">strlen</span>(name); i++)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">sprintf</span>(sn, <span class="string">"%s%02x"</span>, sn, name[i] ^ ((i % <span class="number">3</span> + <span class="number">1</span>) * <span class="number">16</span>));</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">"%s"</span>, sn);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>为了求得序列号为 <code>5B134977135E7D13</code> 的用户名，可编写出如下的注册机。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> a, i = <span class="number">0</span>, s;</span><br><span class="line">	<span class="keyword">while</span>(<span class="built_in">scanf</span>(<span class="string">"%02x"</span>, &amp;a) != EOF)</span><br><span class="line">	&#123;</span><br><span class="line">		s = ((i++) % <span class="number">3</span> + <span class="number">1</span>) * <span class="number">16</span>;</span><br><span class="line">		<span class="built_in">putchar</span>(a ^ s);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>得到用户名为 <code>K3yg3nm3</code>，即为答案。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/01/02/reversing-kr-easy-keygen/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1028,7 +1031,7 @@ a_n-x_0=f'(x_0)(a_{n-1}-x_0),</script><p>显然，这里的 $f’(x_0)$ 的绝�
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-03-27 15:49:16" itemprop="dateModified" datetime="2020-03-27T15:49:16+08:00">2020-03-27</time>
+                <time title="Modified: 2020-05-30 22:03:55" itemprop="dateModified" datetime="2020-05-30T22:03:55+08:00">2020-05-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1060,8 +1063,14 @@ a_n-x_0=f'(x_0)(a_{n-1}-x_0),</script><p>显然，这里的 $f’(x_0)$ 的绝�
 
       
           <h1 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h1><p>给了一个可执行程序，打开后有文本框和按钮。<br><img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-1.png" class="" title="程序界面"><br>随便输入一段文字后，按下按钮提示密码错误。<br><img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-2.png" class="" title="密码错误的提示"><br>基本可以确定，本题答案就是要输入的密码</p>
-<h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><p>打开 IDA 进行静态分析，浏览了一圈过程，发现了处理入口，按 F5 给出 C 风格的伪代码。<br><img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-3.png" class="" title="处理入口"><br>查看判断条件其实就已经可大致判断出答案为 <code>Ea5yR3versing</code>，但是为了进一步的学习，此处进行一下深层次的理解。<br>先来看伪代码的变量声明区，有一些判断条件中出现的变量。<br><img src="/2020/01/02/reversing-kr-easy-crack/easy-crack-4.png" class="" title="处理入口声明区"><br>此处的 <code>String</code> 实际上是字符串的第一个字符，而 <code>[sp+4h]</code> 表明了其相对于栈顶的偏移为 <code>0x04</code>，类似地，对于其它变量也可利用 IDA 给出的地址偏移进行分析。<br>设字符串为 <code>str</code>，可列出下表。<br>|  变量名  |  实际值  |<br>| —— | —— |<br>|  <code>String</code>  |  <code>str[0]</code>  |<br>|  <code>v3</code>  | <code>str[1]</code> |<br>|  <code>v4</code>  | <code>str[2]</code> |<br>|  <code>v5</code>  | <code>str[4]</code> |<br>接着，程序对 <code>str</code> 进行清空操作，使用 <code>GetDlgItemTextA</code> 获取文本框中的内容，并将其存入 <code>str</code>。<br>最后结合判断条件<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">v3 == <span class="string">'a'</span> &amp;&amp; !<span class="built_in">strncmp</span>(&amp;v4, <span class="string">"5y"</span>, <span class="number">2u</span>) &amp;&amp; !<span class="built_in">strcmp</span>(&amp;v5, <span class="string">"R3versing"</span>) &amp;&amp; <span class="keyword">String</span> == <span class="string">'E'</span></span><br></pre></td></tr></table></figure><br>可以知道 <code>str</code> 应为如下内容。<br>|0|1|2|3|4|5|6|7|8|9|A|B|C|D|E|F|<br>|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|<br>|E|a|5|y|R|3|v|e|r|s|i|n|g| | | |<br>便得到答案 <code>Ea5yR3versing</code>。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/01/02/reversing-kr-easy-crack/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
