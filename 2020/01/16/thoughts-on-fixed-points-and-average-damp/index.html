@@ -49,15 +49,15 @@
   };
 </script>
 
-  <meta name="description" content="概念不动点一个函数 $f(x)$ 如果有定义域内的 $x_0$ 满足 f(x_0)&#x3D;x_0,则 $x_0$ 就是 $f(x)$ 的不动点. 吸性不动点假设 $f(x)$ 是一个具有不动点 $x_0$ 的函数，定义一个数列 $a_n$ 满足递推关系 a_n&#x3D;f(a_{n-1}),如果 \exist\delta&gt;0:(\forall a_0\in N(x_0, \delta):\lim_{n\to+\">
+  <meta name="description" content="概念不动点一个函数 $f(x)$ 如果有定义域内的 $x_0$ 满足 f(x_0)&#x3D;x_0,则 $x_0$ 就是 $f(x)$ 的不动点. 吸性不动点假设 $f(x)$ 是一个具有不动点 $x_0$ 的函数，定义一个数列 $a_n$ 满足递推关系 a_n&#x3D;f(a_{n-1}),如果 \exists\delta&gt;0:(\forall a_0\in N(x_0, \delta):\lim_{n\to+">
 <meta property="og:type" content="article">
 <meta property="og:title" content="浅谈不动点与平均阻尼法">
 <meta property="og:url" content="https://cs.yscale.cf/2020/01/16/thoughts-on-fixed-points-and-average-damp/index.html">
 <meta property="og:site_name" content="yscale&#39;s CS blog">
-<meta property="og:description" content="概念不动点一个函数 $f(x)$ 如果有定义域内的 $x_0$ 满足 f(x_0)&#x3D;x_0,则 $x_0$ 就是 $f(x)$ 的不动点. 吸性不动点假设 $f(x)$ 是一个具有不动点 $x_0$ 的函数，定义一个数列 $a_n$ 满足递推关系 a_n&#x3D;f(a_{n-1}),如果 \exist\delta&gt;0:(\forall a_0\in N(x_0, \delta):\lim_{n\to+\">
+<meta property="og:description" content="概念不动点一个函数 $f(x)$ 如果有定义域内的 $x_0$ 满足 f(x_0)&#x3D;x_0,则 $x_0$ 就是 $f(x)$ 的不动点. 吸性不动点假设 $f(x)$ 是一个具有不动点 $x_0$ 的函数，定义一个数列 $a_n$ 满足递推关系 a_n&#x3D;f(a_{n-1}),如果 \exists\delta&gt;0:(\forall a_0\in N(x_0, \delta):\lim_{n\to+">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2020-01-15T22:54:15.000Z">
-<meta property="article:modified_time" content="2020-03-27T07:49:16.831Z">
+<meta property="article:modified_time" content="2020-07-25T15:55:10.080Z">
 <meta property="article:author" content="yscale">
 <meta property="article:tag" content="SICP">
 <meta name="twitter:card" content="summary">
@@ -219,7 +219,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-03-27 15:49:16" itemprop="dateModified" datetime="2020-03-27T15:49:16+08:00">2020-03-27</time>
+                <time title="Modified: 2020-07-25 23:55:10" itemprop="dateModified" datetime="2020-07-25T23:55:10+08:00">2020-07-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -254,7 +254,7 @@
 <script type="math/tex; mode=display">f(x_0)=x_0,</script><p>则 $x_0$ 就是 $f(x)$ 的<strong>不动点</strong>.</p>
 <h2 id="吸性不动点"><a href="#吸性不动点" class="headerlink" title="吸性不动点"></a>吸性不动点</h2><p>假设 $f(x)$ 是一个具有不动点 $x_0$ 的函数，定义一个数列 $a_n$ 满足递推关系</p>
 <script type="math/tex; mode=display">a_n=f(a_{n-1}),</script><p>如果</p>
-<script type="math/tex; mode=display">\exist\delta>0:(\forall a_0\in N(x_0, \delta):\lim_{n\to+\infty}a_n=x_0)</script><p>那么该不动点 $x_0$ 就是吸性不动点.</p>
+<script type="math/tex; mode=display">\exists\delta>0:(\forall a_0\in N(x_0, \delta):\lim_{n\to+\infty}a_n=x_0)</script><p>那么该不动点 $x_0$ 就是吸性不动点.</p>
 <h2 id="不动点的稳定性"><a href="#不动点的稳定性" class="headerlink" title="不动点的稳定性"></a>不动点的稳定性</h2><p>假设 $f(x)$ 是一个具有不动点 $x_0$ 的函数，记 $f^n(x)$ 表示 $f\overbrace{(\cdots(}^nx)\cdots)$，有两种稳定性考虑：<br>如果</p>
 <script type="math/tex; mode=display">\forall\varepsilon>0:(\exists\delta>0:\forall x\in N(x_0,\delta): |f^n(x)-f^n(x_0)|<\varepsilon),</script><p>则该不动点 $x_0$ 是 <strong>Lyapunov 稳定</strong>的，在此基础上，如果</p>
 <script type="math/tex; mode=display">
@@ -401,7 +401,7 @@ a_n-x_0=f'(x_0)(a_{n-1}-x_0),</script><p>显然，这里的 $f’(x_0)$ 的绝�
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
