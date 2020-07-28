@@ -76,10 +76,11 @@
 <meta property="og:image" content="https://cs.yscale.cf/2020/07/23/2020-mid-home-network-construction/cname.png">
 <meta property="og:image" content="https://cs.yscale.cf/2020/07/23/2020-mid-home-network-construction/pxe.png">
 <meta property="og:image" content="https://cs.yscale.cf/2020/07/23/2020-mid-home-network-construction/grub-tftproot.png">
+<meta property="og:image" content="https://cs.yscale.cf/2020/07/23/2020-mid-home-network-construction/esxi-vlan.png">
 <meta property="og:image" content="https://cs.yscale.cf/2020/07/23/2020-mid-home-network-construction/firewall-ad.png">
 <meta property="og:image" content="https://cs.yscale.cf/2020/07/23/2020-mid-home-network-construction/firewall-acl.png">
 <meta property="article:published_time" content="2020-07-22T17:14:38.000Z">
-<meta property="article:modified_time" content="2020-07-28T01:41:15.699Z">
+<meta property="article:modified_time" content="2020-07-28T01:43:46.925Z">
 <meta property="article:author" content="yscale">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://cs.yscale.cf/2020/07/23/2020-mid-home-network-construction/network-diagram.png">
@@ -241,7 +242,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-07-28 09:41:15" itemprop="dateModified" datetime="2020-07-28T09:41:15+08:00">2020-07-28</time>
+                <time title="Modified: 2020-07-28 09:43:46" itemprop="dateModified" datetime="2020-07-28T09:43:46+08:00">2020-07-28</time>
               </span>
 
           
@@ -326,7 +327,8 @@
 <p>可以利用 <code>grub-mknetdir</code> 生成 PXE 启动 GRUB 的相关文件，传到 tftp 根目录下.</p>
 <p>值得注意的是，使用主题还需要用 <code>($tftproot)</code> 替换一下配置文件中的路径.</p>
 <img src="/2020/07/23/2020-mid-home-network-construction/grub-tftproot.png" class="" title="GRUB 配置">
-<h2 id="服务器"><a href="#服务器" class="headerlink" title="服务器"></a>服务器</h2><p>服务器基本按照个人意愿来配置，此处使用了 ESXI，为了隔离终端和管理，将 ESXI 终端网络打上 VLAN tag 12.</p>
+<h2 id="服务器"><a href="#服务器" class="headerlink" title="服务器"></a>服务器</h2><p>服务器基本按照个人意愿来配置，此处使用了 ESXI，为了隔离终端和管理，将 ESXI 终端网络打上 VLAN 12.</p>
+<img src="/2020/07/23/2020-mid-home-network-construction/esxi-vlan.png" class="" title="ESXI VLAN">
 <h1 id="安全专题"><a href="#安全专题" class="headerlink" title="安全专题"></a>安全专题</h1><h2 id="防火墙防攻击"><a href="#防火墙防攻击" class="headerlink" title="防火墙防攻击"></a>防火墙防攻击</h2><p>考虑到未来可能运行一些服务，并且容易遭到同行的攻击，因此开启防火墙上的攻击防护</p>
 <img src="/2020/07/23/2020-mid-home-network-construction/firewall-ad.png" class="" title="攻击防护">
 <h2 id="ACL"><a href="#ACL" class="headerlink" title="ACL"></a>ACL</h2><h3 id="防火墙信任-IP"><a href="#防火墙信任-IP" class="headerlink" title="防火墙信任 IP"></a>防火墙信任 IP</h3><p>为了防止某些网段未经授权访问防火墙管理接口，并尝试爆破，配置信任主机.</p>
