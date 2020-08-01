@@ -22,7 +22,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://cs.yscale.cf').hostname,
+    hostname: new URL('https://cs.yscale.tk').hostname,
     root: '/',
     scheme: 'Gemini',
     version: '7.7.0',
@@ -52,27 +52,27 @@
   <meta name="description" content="GeekPwn 2020 的云安全热身赛结束了，一共 2 天，把能做的 Web 都做了，比赛的 Web 题考察面比较古怪，让我这种 Web 狗感到极度不舒适. 一共 4 道 Web 题，一题签到类的 Web 题，一题假 Web 题（rtmpsrv 0day emmm….），剩下两道 XSS 相关的题我做了出来，其中一道颇为巧妙，并且有潜在的用途，写个文章记录一下.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="[GeekPwn 2020] 云安全热身赛两道 XSS 题解">
-<meta property="og:url" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/index.html">
+<meta property="og:url" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/index.html">
 <meta property="og:site_name" content="yscale&#39;s CS blog">
 <meta property="og:description" content="GeekPwn 2020 的云安全热身赛结束了，一共 2 天，把能做的 Web 都做了，比赛的 Web 题考察面比较古怪，让我这种 Web 狗感到极度不舒适. 一共 4 道 Web 题，一题签到类的 Web 题，一题假 Web 题（rtmpsrv 0day emmm….），剩下两道 XSS 相关的题我做了出来，其中一道颇为巧妙，并且有潜在的用途，写个文章记录一下.">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/bot.png">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/link-github.png">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/link-github-404.png">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/final.png">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-vue.png">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-bot.png">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-src-message.png">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-subdomain.png">
-<meta property="og:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-final.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/bot.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/link-github.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/link-github-404.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/final.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-vue.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-bot.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-src-message.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-subdomain.png">
+<meta property="og:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/umsg-final.png">
 <meta property="article:published_time" content="2020-07-12T17:07:32.000Z">
 <meta property="article:modified_time" content="2020-07-12T19:40:26.886Z">
 <meta property="article:author" content="yscale">
 <meta property="article:tag" content="GeekPwn">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/bot.png">
+<meta name="twitter:image" content="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/bot.png">
 
-<link rel="canonical" href="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/">
+<link rel="canonical" href="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/">
 
 
 <script id="page-configurations">
@@ -199,7 +199,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="en">
-    <link itemprop="mainEntityOfPage" href="https://cs.yscale.cf/2020/07/13/ctf-geekpwn-cloudsec-xss/">
+    <link itemprop="mainEntityOfPage" href="https://cs.yscale.tk/2020/07/13/ctf-geekpwn-cloudsec-xss/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://avatars1.githubusercontent.com/u/13887988">
@@ -528,7 +528,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
     var gitalk = new Gitalk({
       clientID: '5029acc5b0d731935679',
       clientSecret: '1527b60e3c2f74d647dc2ff464347745fc68bbb3',
-      repo: 'cs.yscale.cf',
+      repo: 'cs.yscale.tk',
       owner: 'siger-young',
       admin: ['siger-young'],
       id: '22645caac1fd14735c0d45dcdf111df7',
